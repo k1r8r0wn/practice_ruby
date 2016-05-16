@@ -1,8 +1,8 @@
 # Основной класс для управления.
 
-require_relative 'railway_station.rb'
-require_relative 'train.rb'
-require_relative 'route.rb'
+require_relative 'railway_station'
+require_relative 'train'
+require_relative 'route'
 
 puts '============================'
 puts '1. Create railway stations'
