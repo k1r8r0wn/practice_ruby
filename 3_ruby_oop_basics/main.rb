@@ -1,5 +1,3 @@
-# Основной класс для управления.
-
 require_relative 'railway_station'
 require_relative 'train'
 require_relative 'route'
