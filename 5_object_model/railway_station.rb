@@ -16,6 +16,10 @@ class RailwayStation
     @@information = information
   end
 
+  def self.all_stations
+    puts @@information.station.keys
+  end
+
   def trains_at_station
     if trains.length > 0
       "Station name: #{print_station_name}, Train(-s) in the station: #{trains.length} (#{trains_numbers}), Cargo train(-s): #{trains_calc[:cargo]}, Passenger train(-s): #{trains_calc[:passenger]}"
@@ -60,3 +64,11 @@ class RailwayStation
     numbers.join(", ")
   end
 end
+
+# information = Information.new
+# RailwayStation.information = information
+#
+# RailwayStation.new(:Berlin)
+# RailwayStation.new(:Paris)
+# RailwayStation.all_stations
+# p information.station

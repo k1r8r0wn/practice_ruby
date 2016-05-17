@@ -23,7 +23,11 @@ class Train
   def self.information= (information)
     @@information = information
   end
-  
+
+  def self.find(number)
+    @@information.train[number] || nil
+  end
+
   def current_speed
     if @speed > 0
       puts "Train №#{number} has speed #{@speed} km/h."
@@ -132,10 +136,12 @@ class Train
   end
 end
 
-information = Information.new
-Train.information = information
-cargo = Train.new(:cargo_13)
-Train.new(:passenger_7)
-
-puts cargo.name= ('Chicago Railway Manufacture')
-puts cargo.produced_by('train')
+# information = Information.new
+# Train.information = information
+# cargo = Train.new(:cargo_13)
+# Train.new(:passenger_7)
+#
+# puts cargo.name= ('Chicago Railway Manufacture')
+# puts cargo.produced_by('train')
+#
+# Train.find(:cargo_13).current_speed
