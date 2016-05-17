@@ -9,7 +9,7 @@ class RailwayStation
     @name = name
     @trains = []
     @information = @@information
-    @information[:station].push(self)
+    @information.station[@name]= self
   end
 
   def self.information= (information)
@@ -26,7 +26,6 @@ class RailwayStation
 
   def allow_arrival!(train)
     train.on_station = true
-    train.stop
     trains.push(train)
   end
 

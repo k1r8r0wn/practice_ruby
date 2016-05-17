@@ -1,8 +1,10 @@
 require_relative 'company'
 require_relative 'information'
+require_relative 'text'
 
 class Train
   include Company
+  include Text
 
   attr_reader :number, :speed, :station, :route, :carriage_type, :carriages
   attr_accessor :on_station, :type
@@ -15,13 +17,13 @@ class Train
     @carriage_type = :universal
     @carriages = []
     @information = @@information
-    @information[:train].push(self)
+    @information.train[@number]= self
   end
 
   def self.information= (information)
     @@information = information
   end
-
+  
   def current_speed
     if @speed > 0
       puts "Train №#{number} has speed #{@speed} km/h."
@@ -58,11 +60,19 @@ class Train
   end
 
   def hook_carriage
-    self.carriages.push @carriage_type.new if speed_zero?
+    if speed_zero?
+      self.carriages.push @carriage_type.new
+    else
+      Text.message(:train, :hook_error)
+    end
   end
 
   def unhook_carriage
-    self.carriages.pop if speed_zero? && ready_to_unhook?
+    if speed_zero? && ready_to_unhook?
+      self.carriages.pop
+    else
+      Text.message(:train, :unhook_error)
+    end
   end
 
   def route!(route)
@@ -71,16 +81,25 @@ class Train
   end
 
   def train_departure_station
-    puts "The departure station in a route of the train №#{number} is #{route.departure_station.capitalize}."
+    puts Text.message(:train, :departure_station) + route.departure_station.capitalize
   end
 
   def train_destination_station
-    puts "The destination station in a route of the train №#{number} is #{route.destination_station.capitalize}."
+    puts Text.message(:train, :destination_station) + route.last.destination_station.capitalize
   end
 
   def move!
-    self.station = next_station unless on_station && next_station
-    speed = 0
+    if !on_station && !next_station
+      self.station = next_station
+      @speed = 0
+    else
+      puts Text.message(:train, :move_error)
+    end
+  end
+
+  def next_station
+    next_station = route.index(station) + 1
+    route[next_station]
   end
 
   def all_trains
@@ -108,11 +127,6 @@ class Train
     self.speed.zero? && length > 0
   end
 
-  def next_station
-    next_station = route.index(@station) + 1
-    route[next_station]
-  end
-
   def length
     carriages.size
   end
@@ -121,6 +135,7 @@ end
 information = Information.new
 Train.information = information
 cargo = Train.new(:cargo_13)
-passenger = Train.new(:passenger_7)
+Train.new(:passenger_7)
+
 puts cargo.name= ('Chicago Railway Manufacture')
 puts cargo.produced_by('train')

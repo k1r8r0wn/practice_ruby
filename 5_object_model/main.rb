@@ -5,9 +5,10 @@ require_relative 'route'
 require_relative 'passenger_train'
 require_relative 'cargo_train'
 require_relative 'carriage'
+require_relative 'text'
 
 class Main
-  attr_reader :information
+  include Text
 
   def initialize
     @information = Information.new
@@ -27,27 +28,26 @@ class Main
   def interface
     catch (:exit) do
       loop do
-        system('clear')
         menu
         first_command = command
         throw :exit if first_command == 'q'
         case first_command
         when 's'
-          menu_option(menu_create_station)
+          menu_option('menu_create_station')
         when 'ct'
-          menu_option(menu_create_cargo_train)
+          menu_option('menu_create_cargo_train')
         when 'pt'
-          menu_option(menu_create_passenger_train)
+          menu_option('menu_create_passenger_train')
         when 'h'
-          menu_option(menu_hook_carriage)
+          menu_option('menu_hook_carriage')
         when 'un'
-          menu_option(menu_unhook_carriage)
+          menu_option('menu_unhook_carriage')
         when 'a'
-          menu_option(menu_allow_arrival)
+          menu_option('menu_allow_arrival')
         when 'i'
-          menu_option(menu_information)
+          menu_option('menu_information')
         else
-          menu_option(error)
+          menu_option('menu_error')
         end
       end
     end
@@ -55,151 +55,129 @@ class Main
 
   private
 
-  def menu
-    greetings
-    puts 'Main railway control commands:
-    |-----------------------------------------------|
-    |          s - create a new station             |
-    |          ct - create a cargo train            |
-    |         pt - create a passenger train         |
-    |-----------------------------------------------|
-    |        h - hook a carriage to the train       |
-    |      un - unhook a carriage from the train    |
-    |-----------------------------------------------|
-    |     a - allow train to arrive on a station    |
-    |-----------------------------------------------|
-    |             i - show information              |
-    |            q - quit control panel             |
-    |-----------------------------------------------|'
-  end
+  attr_reader :information
 
-  def greetings
-    puts 'Welcome to Railway Control Service.'
+  def menu
+    system('clear')
+    puts Text.intro_message(:menu)
   end
 
   def menu_option(option)
-    option
+    system('clear')
+    puts Text.intro_message(option.to_sym)
+    send option
+    if resulting_option?(option) && (option != ('menu_error')) && (option != ('menu_information'))
+      puts Text.system_message(:success)
+    end
     pause
   end
 
   def command
-    puts 'Please, type a command:'
+    puts Text.message(:enter, :command)
     gets.chomp.downcase
   end
 
-  def error
-    puts "It's wrong command, please choose from the list."
-  end
+  def menu_error; end
 
   def pause
-    puts "Press 'Enter' key to continue..."
+    puts Text.system_message(:pause)
     gets
   end
 
+  def resulting_option?(option)
+    option = 'menu_create_station' || 'menu_create_cargo_train' || 'menu_create_passenger_train' || 'menu_hook_carriage' || 'menu_unhook_carriage'|| 'menu_allow_arrival'
+  end
+
   def menu_create_station
-    puts "You are going to create a station. Please, type station's name:"
     name = gets.chomp.capitalize.to_sym
     RailwayStation.new(name)
-    puts "Station '#{name.to_s}' successfully created!"
   end
 
   def menu_create_cargo_train
-    puts 'You are going to create a cargo train. Please, type a number of the new cargo train:'
     number = gets.chomp.to_sym
     CargoTrain.new(number)
-    puts "Cargo train №#{number} successfully created!"
   end
 
   def menu_create_passenger_train
-    puts 'You are going to create a passenger train. Please, type a number of the new passenger train:'
     number = gets.chomp.to_sym
     PassengerTrain.new(number)
-    puts "Passenger train №#{number} successfully created!"
   end
 
   def menu_hook_carriage
-    puts 'You are going to hook an extra carriage to your train.'
-    puts "Trains that are available to do this action: #{information.trains_available_to_hook_and_unhook_carriages}"
+    puts information.trains_available_to_hook_and_unhook_carriages
     if information.trains_available_to_hook_and_unhook_carriages == 'No trains are ready now!'
       puts 'You need to allow any train to any station first!'
     else
       puts 'Enter train number, please:'
-      train = get_and_find_train
+      train = get_and_find(:train)
       train.hook_carriage
-      puts 'Done! You can check the result in information.'
     end
   end
 
   def menu_unhook_carriage
-    puts 'You are going to unhook a carriage from your train.'
-    puts "Trains that are available to do this action: #{information.trains_available_to_hook_and_unhook_carriages}"
+    puts information.trains_available_to_hook_and_unhook_carriages
     if information.trains_available_to_hook_and_unhook_carriages == 'No trains are ready now!'
       puts 'You need to allow any train to any station first or your existing train(-s) have no carriages at all.'
     else
       puts 'Enter train number, please:'
-      train = get_and_find_train
+      train = get_and_find(:train)
       train.unhook_carriage
-      puts 'Done! You can check the result in information.'
     end
   end
 
   def menu_allow_arrival
-    puts 'You are going to allow train arrive on a platform to one of available stations:'
     puts "#{information.stations}"
     puts 'Enter the station name, please:'
-    station = get_and_find_station
-    puts "Numbers of available trains to allow: #{information.trains_available_to_allow}"
+    station = get_and_find(:station)
+    puts information.trains_available_to_allow
     puts 'Enter the train number, please:'
-    train = get_and_find_train
+    train = get_and_find(:train)
     station.allow_arrival! train
     puts "Great! Now train №#{train.print_train_number} is at #{station.print_station_name} station."
   end
 
   def menu_information
-    if information[:train].empty? && information[:station].empty?
-      puts '---------------------------'
+    if information.train.empty? && information.station.empty?
+      puts '---------------------------------'
       puts 'No stations & trains yet.'
-      puts '---------------------------'
-    elsif information[:station].empty?
-      puts '------------------'
+      puts '---------------------------------'
+    elsif information.station.empty?
+      puts '---------------------------------'
       puts 'No stations yet.'
-      puts '-------------------------------'
+      puts '---------------------------------'
       puts 'List of all available trains:'
-      puts '-------------------------------'
+      puts '---------------------------------'
       puts "#{information.trains_expanded}"
-    elsif information[:train].empty?
+    elsif information.train.empty?
       puts '---------------------------------'
       puts 'List of all available stations:'
       puts '---------------------------------'
       puts "#{information.stations}"
-      puts '----------------'
+      puts '---------------------------------'
       puts 'No trains yet.'
-      puts '----------------'
+      puts '---------------------------------'
     else
       puts '---------------------------------'
       puts 'List of all available stations:'
       puts '---------------------------------'
       puts "#{information.stations}"
-      puts '-------------------------------'
+      puts '---------------------------------'
       puts 'List of all available trains:'
-      puts '-------------------------------'
+      puts '---------------------------------'
       puts "#{information.trains_expanded}"
-      puts '---------------------'
+      puts '---------------------------------'
       puts 'Trains at stations:'
-      puts '---------------------'
+      puts '---------------------------------'
       puts "#{information.stations_expanded}"
-      puts '-------------------------------'
+      puts '---------------------------------'
     end
   end
 
-  def get_and_find_train
-    number = gets.chomp.to_sym
-    information[:train].each.find { |train| train.number == number }
-  end
-
-  def get_and_find_station
+  def get_and_find(type)
     name = gets.chomp.to_sym
-    information[:station].each.find { |station| station.name == name }
+    method = type == :train ? 'train' : 'station'
+    hash = information.send method
+    hash[name]
   end
 end
 
