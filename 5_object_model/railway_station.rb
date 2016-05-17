@@ -1,3 +1,5 @@
+require_relative 'information'
+
 class RailwayStation
   attr_reader :information, :name, :trains
 

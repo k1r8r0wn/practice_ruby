@@ -1,4 +1,9 @@
+require_relative 'company'
+require_relative 'information'
+
 class Train
+  include Company
+
   attr_reader :number, :speed, :station, :route, :carriage_type, :carriages
   attr_accessor :on_station, :type
 
@@ -112,3 +117,10 @@ class Train
     carriages.size
   end
 end
+
+information = Information.new
+Train.information = information
+cargo = Train.new(:cargo_13)
+passenger = Train.new(:passenger_7)
+puts cargo.name= ('Chicago Railway Manufacture')
+puts cargo.produced_by('train')
