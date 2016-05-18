@@ -1,10 +1,10 @@
-require_relative 'information'
-require_relative 'railway_station'
-require_relative 'train'
-require_relative 'route'
-require_relative 'passenger_train'
-require_relative 'cargo_train'
-require_relative 'carriage'
+require_relative 'railway_control_service/information'
+require_relative 'railway_control_service/railway_station'
+require_relative 'railway_control_service/train'
+require_relative 'railway_control_service/route'
+require_relative 'railway_control_service/passenger_train'
+require_relative 'railway_control_service/cargo_train'
+require_relative 'railway_control_service/carriage'
 
 class Main
   attr_reader :information

@@ -1,6 +1,6 @@
-require_relative 'railway_station'
-require_relative 'train'
-require_relative 'route'
+require_relative 'railway_control_service/railway_station'
+require_relative 'railway_control_service/train'
+require_relative 'railway_control_service/route'
 
 puts '============================'
 puts '1. Create railway stations'
