@@ -20,42 +20,56 @@ class Main
     RailwayStation.new :Prague
     moscow = RailwayStation.new :Moscow
 
-    cargo = CargoTrain.new(:cargo_13)
+    cargo = CargoTrain.new('CAR-12'.to_sym)
     moscow.allow_arrival! cargo
-    PassengerTrain.new(:passenger_7)
+    PassengerTrain.new('PAS-70'.to_sym)
   end
 
   def interface
-    catch (:exit) do
-      loop do
-        menu
-        first_command = command
-        throw :exit if first_command == 'q'
-        case first_command
-        when 's'
-          menu_option('menu_create_station')
-        when 'ct'
-          menu_option('menu_create_cargo_train')
-        when 'pt'
-          menu_option('menu_create_passenger_train')
-        when 'h'
-          menu_option('menu_hook_carriage')
-        when 'un'
-          menu_option('menu_unhook_carriage')
-        when 'a'
-          menu_option('menu_allow_arrival')
-        when 'i'
-          menu_option('menu_information')
-        else
-          menu_option('menu_error')
+    begin
+      catch (:exit) do
+        loop do
+          menu
+          first_command = command
+          throw :exit if first_command == 'q'
+          case first_command
+          when 's'
+            menu_option('menu_create_station')
+          when 'ct'
+            menu_option('menu_create_cargo_train')
+          when 'pt'
+            menu_option('menu_create_passenger_train')
+          when 'h'
+            menu_option('menu_hook_carriage')
+          when 'un'
+            menu_option('menu_unhook_carriage')
+          when 'a'
+            menu_option('menu_allow_arrival')
+          when 'i'
+            menu_option('menu_information')
+          else
+            menu_option('menu_error')
+          end
         end
       end
+
+      rescue StandardError => e
+        attempt ||= 0
+        attempt += 1
+        if attempt < 3
+          puts e.message
+          # puts e.backtrace
+          puts 'You made an error, try again!'
+          pause
+          retry
+        end
+        raise 'Too much errors here, sorry... bye, bye!'
     end
   end
 
   private
 
-  attr_reader :information
+  attr_reader :information, :rescue_count
 
   def menu
     system('clear')
@@ -89,51 +103,56 @@ class Main
   end
 
   def menu_create_station
-    name = gets.chomp.capitalize.to_sym
+    name = gets.chomp.to_sym
+    nil_validation?(name)
     RailwayStation.new(name)
   end
 
   def menu_create_cargo_train
     number = gets.chomp.to_sym
+    nil_validation?(number)
     CargoTrain.new(number)
   end
 
   def menu_create_passenger_train
     number = gets.chomp.to_sym
+    nil_validation?(number)
     PassengerTrain.new(number)
   end
 
   def menu_hook_carriage
-    puts information.trains_available_to_hook_and_unhook_carriages
-    if information.trains_available_to_hook_and_unhook_carriages == 'No trains are ready now!'
-      puts 'You need to allow any train to any station first!'
-    else
-      puts 'Enter train number, please:'
-      train = get_and_find(:train)
-      train.hook_carriage
-    end
+    trains = information.train.select { |_, train| train.on_station == true && train.speed == 0 }
+    raise 'You need to allow any train to any station first!' if trains.empty?
+    trains = trains.keys.join(", ")
+    puts "Available train(-s) on station: #{trains}, enter train number, please:"
+    train = get_and_find(:train)
+    train.hook_carriage
   end
 
   def menu_unhook_carriage
-    puts information.trains_available_to_hook_and_unhook_carriages
-    if information.trains_available_to_hook_and_unhook_carriages == 'No trains are ready now!'
-      puts 'You need to allow any train to any station first or your existing train(-s) have no carriages at all.'
-    else
-      puts 'Enter train number, please:'
-      train = get_and_find(:train)
-      train.unhook_carriage
-    end
+    trains = information.train.select {|_, train| train.on_station == true && train.speed == 0 && !train.carriages.empty?}
+    raise 'You need to allow any train to any station first or your existing train(-s) have no carriages at all.' if trains.empty?
+    trains = trains.keys.join(", ")
+    puts "Available train(-s) on station: #{trains}, enter train number, please:"
+    train = get_and_find(:train)
+    train.unhook_carriage
   end
 
   def menu_allow_arrival
-    puts "#{information.stations}"
+    puts information.stations
     puts 'Enter the station name, please:'
     station = get_and_find(:station)
-    puts information.trains_available_to_allow
+    trains_available_to_allow
     puts 'Enter the train number, please:'
     train = get_and_find(:train)
     station.allow_arrival! train
     puts "Great! Now train №#{train.print_train_number} is at #{station.print_station_name} station."
+  end
+
+  def trains_available_to_allow
+    trains = information.train.select {|_,train| !train.on_station}
+    raise 'No trains available to allow now.' if trains.empty?
+    puts "List of trains available to allow: #{trains.keys.join(", ")}"
   end
 
   def menu_information
@@ -175,9 +194,16 @@ class Main
 
   def get_and_find(type)
     name = gets.chomp.to_sym
+    nil_validation?(name)
     method = type == :train ? 'train' : 'station'
     hash = information.send method
+    raise "Error, there is no \"#{name}\" #{type}" if hash[name].nil?
     hash[name]
+  end
+
+  def nil_validation?(string)
+    raise 'Hmm, input is empty.' if string.empty?
+    true
   end
 end
 

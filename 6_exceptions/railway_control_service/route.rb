@@ -4,6 +4,7 @@ class Route
   end
 
   def add_station!(station)
+    raise 'Not a station class object!' unless station.class == RailwayStation
     route.push(station)
     puts "Station '#{station.to_s.capitalize}' successfully added to route."
   end
@@ -18,7 +19,7 @@ class Route
   end
 
   def all_stations
-    route.each_with_index do |station, index|
+    route.each do |station, index|
       puts "Destination point #{index + 1} is #{station.to_s.capitalize}"
     end
   end

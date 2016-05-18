@@ -10,22 +10,9 @@ class Information
     train.keys.join(", ")
   end
 
-  def trains_available_to_hook_and_unhook_carriages
-    trains = train.values.each.find_all do |train|
-      train.on_station == true && train.speed == 0
-    end
-    trains.map! {|train| train.number.to_s}
-    message = !trains.empty? ? trains.join(", ") : Text.message(:system, :no_trains)
-    "Available train(s) at station: #{message}"
-  end
-
-  def trains_available_to_allow
-    trains = train.values.each.find_all do |train|
-      train.on_station == false
-    end
-    trains.map! {|train| train.number}
-    message = !trains.empty? ? trains.join(", ") : Text.message(:system, :no_trains)
-    "Available train(-s) to allow: #{message}"
+  def validate_unique_number?(number)
+    raise 'You already have the train with that number!' if train.keys.any? {|train_number| train_number == number}
+    true
   end
 
   def trains_expanded

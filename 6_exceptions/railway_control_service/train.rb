@@ -3,13 +3,16 @@ require_relative 'information'
 require_relative 'text'
 
 class Train
-  include Company
   include Text
+  include Company
 
-  attr_reader :number, :speed, :station, :route, :carriage_type, :carriages
-  attr_accessor :on_station, :type
+  TRAIN_NUMBER_FORMAT = /^([a-z]|\d){3}-?([a-z]|\d){2}$/i
+
+  attr_reader :number, :speed, :station, :route, :type, :carriages
+  attr_accessor :on_station
 
   def initialize(number)
+    @information ||= nil
     @number = number
     @on_station = false
     @type = :universal
@@ -17,6 +20,8 @@ class Train
     @carriage_type = :universal
     @carriages = []
     @information = @@information
+    valid!
+    @information.validate_unique_number?(number)
     @information.train[@number]= self
   end
 
@@ -25,7 +30,14 @@ class Train
   end
 
   def self.find(number)
+    number = number.to_sym
     @@information.train[number] || nil
+  end
+
+  def valid?
+    valid!
+  rescue StandardError
+    false
   end
 
   def current_speed
@@ -64,19 +76,14 @@ class Train
   end
 
   def hook_carriage
-    if speed_zero?
-      self.carriages.push @carriage_type.new
-    else
-      Text.message(:train, :hook_error)
-    end
+    raise 'Train not ready to hook carriages' unless on_station && speed == 0
+    self.carriages.push @carriage_type.new
+    raise 'Error with carriages!' unless carriages.any? { |carriage| carriage.class == @carriage_type }
   end
 
   def unhook_carriage
-    if speed_zero? && ready_to_unhook?
-      self.carriages.pop
-    else
-      Text.message(:train, :unhook_error)
-    end
+    raise 'Train not ready to unhook carriages.' unless on_station && speed == 0 && !carriages.empty?
+    self.carriages.pop
   end
 
   def route!(route)
@@ -127,12 +134,18 @@ class Train
     self.speed < 0
   end
 
-  def ready_to_unhook?
-    self.speed.zero? && length > 0
-  end
-
   def length
     carriages.size
+  end
+
+  def valid!
+    raise 'Not valid train number!' if number.to_s !~ TRAIN_NUMBER_FORMAT
+    raise 'Information class is nil!' if @@information.nil?
+    raise 'Not valid registry object!' unless @@information.class == Information
+    raise 'Not valid speed parameter!' if speed < 0
+    raise 'Not valid on_station parameter!' if on_station == (false || true)
+    raise 'Not valid type parameter!' if type == (:passenger || :cargo)
+    true
   end
 end
 

@@ -1,15 +1,17 @@
 require_relative 'information'
 
 class RailwayStation
-  attr_reader :information, :name, :trains
+  attr_reader :name, :trains
 
   INITIAL_TRAIN_SPEED = 50
 
   def initialize(name)
+    @@information ||= nil
     @name = name
     @trains = []
     @information = @@information
     @information.station[@name]= self
+    valid!
   end
 
   def self.information= (information)
@@ -18,6 +20,12 @@ class RailwayStation
 
   def self.all_stations
     puts @@information.station.keys
+  end
+
+  def valid?
+    valid!
+  rescue StandardError
+    false
   end
 
   def trains_at_station
@@ -63,12 +71,22 @@ class RailwayStation
     end
     numbers.join(", ")
   end
+
+  def valid!
+    raise 'Information class is nil!' if @information.nil?
+    raise 'Not valid information object!' unless @information.class == Information
+    raise 'Some error with station name!' if name.nil? || name.class != Symbol || name.length > 100
+    raise 'Some error with train list!' if trains.any? {|train| train.class != Train}
+    true
+  end
 end
 
 # information = Information.new
 # RailwayStation.information = information
 #
 # RailwayStation.new(:Berlin)
-# RailwayStation.new(:Paris)
+# paris = RailwayStation.new(:Paris)
 # RailwayStation.all_stations
 # p information.station
+
+# p paris.valid?
