@@ -1,4 +1,5 @@
 require_relative 'information'
+require_relative 'train'
 
 class RailwayStation
   attr_reader :name, :trains
@@ -51,6 +52,12 @@ class RailwayStation
     name.to_s.capitalize
   end
 
+  def each_train(&block)
+    trains.each do |x|
+      block.call(x)
+    end
+  end
+
   private
 
   attr_reader :information
@@ -83,10 +90,26 @@ end
 
 # information = Information.new
 # RailwayStation.information = information
-#
+
 # RailwayStation.new(:Berlin)
 # paris = RailwayStation.new(:Paris)
 # RailwayStation.all_stations
 # p information.station
 
 # p paris.valid?
+
+# Train.information = information
+# t1 = Train.new('ABC-01'.to_sym)
+# t2 = Train.new('ASD-02'.to_sym)
+# t3 = Train.new('000-03'.to_sym)
+# t4 = Train.new('AAA-04'.to_sym)
+# t5 = Train.new('CAR-05'.to_sym)
+# paris.allow_arrival!(t1)
+# paris.allow_arrival!(t2)
+# paris.allow_arrival!(t3)
+# paris.allow_arrival!(t4)
+# paris.allow_arrival!(t5)
+
+# paris.each_train do |train|
+#   puts train.all_trains
+# end
