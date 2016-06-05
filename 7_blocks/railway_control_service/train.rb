@@ -121,6 +121,12 @@ class Train
     number.to_s
   end
 
+  def each_carriage(&block)
+    carriages.each do |carriage|
+      block.call(carriage)
+    end
+  end
+
   private
 
   attr_reader :information
