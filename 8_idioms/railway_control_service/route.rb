@@ -1,38 +1,37 @@
+# Route class
 class Route
   def initialize
     @route = []
   end
 
   def add_station!(station)
-    raise 'Not a station class object!' unless station.class == RailwayStation
+    fail 'Not a station class object!' unless station.class == RailwayStation
     route.push(station)
-    puts "Station '#{station.to_s.capitalize}' successfully added to route."
   end
 
   def remove_station!(station)
     route.delete(station)
-    puts "Station '#{station.to_s.capitalize}' successfully removed from route."
   end
 
-  def copy_route
-    route.map {|station| station}
+  def copy_list
+    route.map { |station| station }
   end
 
-  def all_stations
+  def list
     route.each do |station, index|
-      puts "Destination point #{index + 1} is #{station.to_s.capitalize}"
+      "Destination point \# #{index + 1} is #{station.to_s.capitalize}"
     end
   end
 
-  def departure_station
-    route.first
+  def last_station
+    route.last
   end
 
-  def destination_station
-    route.last
+  def first_station
+    route.first
   end
 
   private
 
-  attr_accessor :route
+  attr_reader :route
 end

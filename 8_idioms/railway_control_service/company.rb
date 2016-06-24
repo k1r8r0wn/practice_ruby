@@ -1,9 +1,9 @@
 module Company
-  def name=(name)
-    @name = name
+  def company_name=(name)
+    @company_name = name
   end
 
-  def produced_by(object)
-    "This #{object} produced by #{@name}"
+  def produced
+    "This product produced by #{@company_name}"
   end
 end

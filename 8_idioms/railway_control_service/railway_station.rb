@@ -1,26 +1,63 @@
-require_relative 'information'
 require_relative 'train'
 
 class RailwayStation
-  attr_reader :name, :trains
+  include Company
+  include InstanceCounter
 
+  attr_reader :name_station, :train_list
   INITIAL_TRAIN_SPEED = 50
 
-  def initialize(name)
-    @@information ||= nil
-    @name = name
-    @trains = []
-    @information = @@information
-    @information.station[@name]= self
-    valid!
-  end
-
-  def self.information= (information)
+  def self.information=(information)
     @@information = information
   end
 
-  def self.all_stations
-    puts @@information.station.keys
+  def self.all
+    @@information.station.keys
+  end
+
+  def initialize(name)
+    @@information ||= nil
+    @registry = @@information
+    @name_station = name
+    @registry.station[@name_station] = self
+    @train_list = []
+    valid!
+  end
+
+  def all
+    train_list
+  end
+
+  def each_train(&block)
+    train_list.each do |x|
+      block.call(x)
+    end
+  end
+
+  def train_names
+    names = train_list.map(&:number)
+    names.join(', ')
+  end
+
+  def trains_calc
+    cargo = 0
+    passenger = 0
+    train_list.each do |train|
+      cargo += 1 if train.type == :cargo
+      passenger += 1 if train.type == :passenger
+    end
+    { cargo: cargo, passenger: passenger }
+  end
+
+  def allow_departure!(train)
+    train.on_station = false
+    train.go(INITIAL_TRAIN_SPEED)
+    train_list.delete(train)
+  end
+
+  def allow_arrival!(train)
+    train.on_station = true
+    train_list.push(train)
   end
 
   def valid?
@@ -29,87 +66,34 @@ class RailwayStation
     false
   end
 
-  def trains_at_station
-    if trains.length > 0
-      "Station name: #{print_station_name}, Train(-s) in the station: #{trains.length} (#{trains_numbers}), Cargo train(-s): #{trains_calc[:cargo]}, Passenger train(-s): #{trains_calc[:passenger]}"
-    else
-      "No trains at the #{print_station_name} station now."
-    end
-  end
-
-  def allow_arrival!(train)
-    train.on_station = true
-    trains.push(train)
-  end
-
-  def allow_departure!(train)
-    train.on_station = false
-    train.speed = INITIAL_TRAIN_SPEED
-    trains.delete(train)
-  end
-
-  def print_station_name
-    name.to_s.capitalize
-  end
-
-  def each_train(&block)
-    trains.each do |x|
-      block.call(x)
-    end
-  end
-
   private
 
   attr_reader :information
-  attr_writer :trains
-
-  def trains_calc
-    cargo, passenger = [0, 0]
-    trains.each do |train|
-      cargo += 1 if train.type == :cargo
-      passenger += 1 if train.type == :passenger
-    end
-  {cargo: cargo, passenger: passenger}
-  end
-
-  def trains_numbers
-    numbers = trains.map do |train|
-      train.number
-    end
-    numbers.join(", ")
-  end
+  attr_writer :train_list
 
   def valid!
-    raise 'Information class is nil!' if @information.nil?
-    raise 'Not valid information object!' unless @information.class == Information
-    raise 'Some error with station name!' if name.nil? || name.class != Symbol || name.length > 100
-    raise 'Some error with train list!' if trains.any? {|train| train.class != Train}
+    valid_information!
+    valid_name_station!
+    valid_train_class!
     true
   end
+
+  def valid_information!
+    fail 'Information class is nil!' if @@information.nil?
+    fail 'Not valid information object!' unless @@information.class == DataCenter
+  end
+
+  def valid_name_station!
+    fail 'Station name is nil!' if name_station.nil?
+    fail 'Station name is not a symbol!' if name_station.class != Symbol
+    fail 'Station name is too long!' if name_station.length > 100
+  end
+
+  def valid_train_class!
+    fail 'Some error with train list!' if valid_train_class?
+  end
+
+  def valid_train_class?
+    train_list.any? { |train| train.class != Train }
+  end
 end
-
-# information = Information.new
-# RailwayStation.information = information
-
-# RailwayStation.new(:Berlin)
-# paris = RailwayStation.new(:Paris)
-# RailwayStation.all_stations
-# p information.station
-
-# p paris.valid?
-
-# Train.information = information
-# t1 = Train.new('ABC-01'.to_sym)
-# t2 = Train.new('ASD-02'.to_sym)
-# t3 = Train.new('000-03'.to_sym)
-# t4 = Train.new('AAA-04'.to_sym)
-# t5 = Train.new('CAR-05'.to_sym)
-# paris.allow_arrival!(t1)
-# paris.allow_arrival!(t2)
-# paris.allow_arrival!(t3)
-# paris.allow_arrival!(t4)
-# paris.allow_arrival!(t5)
-
-# paris.each_train do |train|
-#   puts train.all_trains
-# end
